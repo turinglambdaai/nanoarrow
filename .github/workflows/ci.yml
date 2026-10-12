@@ -23,8 +23,8 @@ jobs:
           set -euxo pipefail
           curl -sL -o nanoarrow.tar.gz \
             https://github.com/apache/arrow-nanoarrow/archive/refs/tags/apache-arrow-nanoarrow-0.9.0.tar.gz
-          tar xzf nanoarrow.tar.gz
-          cmake -S apache-arrow-nanoarrow-apache-arrow-nanoarrow-0.9.0 -B build \
+          mkdir nanoarrow-src && tar xzf nanoarrow.tar.gz -C nanoarrow-src --strip-components=1
+          cmake -S nanoarrow-src -B build \
             -DNANOARROW_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release
           cmake --install build --prefix "$HOME/.nanoarrow"
