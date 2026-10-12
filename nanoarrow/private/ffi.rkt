@@ -44,17 +44,17 @@
   ;; names are probed too, for installations that ship them.  macOS Homebrew
   ;; and Linux CMake disagree on the file names: libnanoarrow_ipc_shared vs
   ;; libnanoarrow_ipc — try every known base name.
+  (define version-suffixes
+    (if (equal? runtime-lib-extension "dylib")
+        '("9.dylib" "0.dylib")
+        '("so.9" "so.0")))
   (define file-names
     (append
      (for*/list ([base (in-list base-names)])
        (format "lib~a.~a" base runtime-lib-extension))
-     (if (equal? runtime-lib-extension "dylib")
-         (append* (for*/list ([base (in-list base-names)])
-                    (list (format "lib~a.9.dylib" base)
-                          (format "lib~a.0.dylib" base))))
-         (append* (for*/list ([base (in-list base-names)])
-                    (list (format "lib~a.so.9" base)
-                          (format "lib~a.so.0" base)))))))
+     (for*/list ([base (in-list base-names)]
+                 [suffix (in-list version-suffixes)])
+       (format "lib~a.~a" base suffix))))
   (append
    base-names
    (for*/list ([dir (in-list candidate-directories)]
