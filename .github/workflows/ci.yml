@@ -13,16 +13,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install nanoarrow (macOS, Homebrew)
-        if: runner.os == 'macOS'
-        run: brew install nanoarrow
-
-      - name: Build nanoarrow 0.9.0 from source (Linux)
-        if: runner.os == 'Linux'
+      - name: Build nanoarrow 0.9.0 from source
         run: |
           set -euxo pipefail
-          # Build outside the workspace: a linked package directory must not
-          # contain stray subdirectories (raco setup scans them as collections).
+          # Both platforms build from source: the CMake IPC module
+          # (libnanoarrow_ipc) is off in the Homebrew formula, and the tests
+          # need it.  Build outside the workspace: a linked package directory
+          # must not contain stray subdirectories (raco setup scans them as
+          # collections).
           work=$(mktemp -d)
           curl -sL -o "$work/nanoarrow.tar.gz" \
             https://github.com/apache/arrow-nanoarrow/archive/refs/tags/apache-arrow-nanoarrow-0.9.0.tar.gz
@@ -37,15 +35,15 @@ jobs:
       - name: Set up Racket
         uses: Bogdanp/setup-racket@v1.12
         with:
-          # arm64 on macOS: brew's libnanoarrow is arm64-only, and an x64
-          # Racket (the action default) cannot dlopen it.
+          # arm64 on macOS: the source-built libnanoarrow is arm64-only, and
+          # an x64 Racket (the action default) cannot dlopen it.
           architecture: ${{ matrix.os == 'macos-latest' && 'arm64' || 'x64' }}
           version: stable
 
       - name: Configure library search path (macOS)
         if: runner.os == 'macOS'
         run: |
-          echo "DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib" >> "$GITHUB_ENV"
+          echo "DYLD_FALLBACK_LIBRARY_PATH=$HOME/.nanoarrow/lib" >> "$GITHUB_ENV"
 
       - name: Configure library search path (Linux)
         if: runner.os == 'Linux'
