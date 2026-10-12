@@ -10,7 +10,6 @@
   "Racket FFI bindings to Apache Arrow nanoarrow: read and write Arrow IPC files containing record batches of primitive column types, without installing Arrow C++ or pyarrow.")
 (define pkg-authors '("turinglambdaai"))
 (define license 'MIT)
-(define scribblings '(("nanoarrow/scribblings/nanoarrow.scrbl" ())))
 ;; The catalog build farm runs `raco test --package`, executing every module
 ;; in the package as a test.  The modules that load the nanoarrow native
 ;; library at require time cannot run on machines without it (the farm), so
