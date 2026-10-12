@@ -1,0 +1,9 @@
+# Racket build artifacts
+compiled/
+doc/
+*.zo
+*.so
+
+# Editor / OS noise
+.DS_Store
+*~

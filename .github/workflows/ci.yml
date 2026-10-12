@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nanoarrow (macOS, Homebrew)
+        if: runner.os == 'macOS'
+        run: brew install nanoarrow
+
+      - name: Build nanoarrow 0.9.0 from source (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          set -euxo pipefail
+          curl -sL -o nanoarrow.tar.gz \
+            https://github.com/apache/arrow-nanoarrow/archive/refs/tags/apache-arrow-nanoarrow-0.9.0.tar.gz
+          tar xzf nanoarrow.tar.gz
+          cmake -S apache-arrow-nanoarrow-apache-arrow-nanoarrow-0.9.0 -B build \
+            -DNANOARROW_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
+          cmake --install build --prefix "$HOME/.nanoarrow"
+
+      - name: Set up Racket
+        uses: Bogdanp/setup-racket@v1.12
+        with:
+          version: stable
+
+      - name: Configure library search path (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          echo "DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib" >> "$GITHUB_ENV"
+
+      - name: Configure library search path (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo "LD_LIBRARY_PATH=$HOME/.nanoarrow/lib" >> "$GITHUB_ENV"
+
+      - name: Install package
+        run: raco pkg install --auto --link .
+
+      - name: Run tests
+        run: raco test -p nanoarrow
