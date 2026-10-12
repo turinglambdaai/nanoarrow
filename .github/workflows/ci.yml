@@ -21,17 +21,24 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           set -euxo pipefail
-          curl -sL -o nanoarrow.tar.gz \
+          # Build outside the workspace: a linked package directory must not
+          # contain stray subdirectories (raco setup scans them as collections).
+          work=$(mktemp -d)
+          curl -sL -o "$work/nanoarrow.tar.gz" \
             https://github.com/apache/arrow-nanoarrow/archive/refs/tags/apache-arrow-nanoarrow-0.9.0.tar.gz
-          mkdir nanoarrow-src && tar xzf nanoarrow.tar.gz -C nanoarrow-src --strip-components=1
-          cmake -S nanoarrow-src -B build \
+          mkdir "$work/src" && tar xzf "$work/nanoarrow.tar.gz" -C "$work/src" --strip-components=1
+          cmake -S "$work/src" -B "$work/build" \
             -DNANOARROW_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --config Release
-          cmake --install build --prefix "$HOME/.nanoarrow"
+          cmake --build "$work/build" --config Release
+          cmake --install "$work/build" --prefix "$HOME/.nanoarrow"
+          rm -rf "$work"
 
       - name: Set up Racket
         uses: Bogdanp/setup-racket@v1.12
         with:
+          # arm64 on macOS: brew's libnanoarrow is arm64-only, and an x64
+          # Racket (the action default) cannot dlopen it.
+          architecture: ${{ matrix.os == 'macos-latest' && 'arm64' || 'x64' }}
           version: stable
 
       - name: Configure library search path (macOS)
