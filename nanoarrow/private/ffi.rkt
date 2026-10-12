@@ -37,22 +37,26 @@
      "/usr/local/lib"
      "~/.nanoarrow/lib")))                   ; CI source-build prefix
 
-(define (candidate-paths base-name)
+(define (candidate-paths base-names)
   ;; The plain name lets the platform loader search DYLD_FALLBACK_LIBRARY_PATH
   ;; / LD_LIBRARY_PATH / default paths; explicit prefixes cover the case where
   ;; the environment variable did not survive into this process. Versioned
-  ;; dylib names (e.g. libnanoarrow_shared.9.dylib) are probed too, for
-  ;; installations that ship them.
+  ;; names are probed too, for installations that ship them.  macOS Homebrew
+  ;; and Linux CMake disagree on the file names: libnanoarrow_ipc_shared vs
+  ;; libnanoarrow_ipc — try every known base name.
   (define file-names
     (append
-     (list (format "lib~a.~a" base-name runtime-lib-extension))
+     (for*/list ([base (in-list base-names)])
+       (format "lib~a.~a" base runtime-lib-extension))
      (if (equal? runtime-lib-extension "dylib")
-         (list (format "lib~a.9.dylib" base-name)
-               (format "lib~a.0.dylib" base-name))
-         (list (format "lib~a.so.9" base-name)
-               (format "lib~a.so.0" base-name)))))
+         (for*/list ([base (in-list base-names)])
+           (list (format "lib~a.9.dylib" base)
+                 (format "lib~a.0.dylib" base)))
+         (for*/list ([base (in-list base-names)])
+           (list (format "lib~a.so.9" base)
+                 (format "lib~a.so.0" base))))))
   (append
-   (list base-name)
+   base-names
    (for*/list ([dir (in-list candidate-directories)]
                [file (in-list file-names)])
      (path->string (expand-user-path (build-path dir file))))))
@@ -61,20 +65,20 @@
   (with-handlers ([exn:fail:filesystem? (lambda (_) #f)])
     (ffi-lib spec)))
 
-(define (load-nanoarrow-library base-name)
-  (define candidates (candidate-paths base-name))
+(define (load-nanoarrow-library base-names)
+  (define candidates (candidate-paths base-names))
   (or (ormap try-ffi-lib candidates)
       (raise (exn:fail:filesystem
               (format "nanoarrow: could not load lib~a; searched: ~a. Install \
 nanoarrow 0.9.x (e.g. `brew install nanoarrow`) or point NANOARROW_LIBRARY_DIR \
 at the directory holding the shared libraries."
-                      base-name
+                      (car base-names)
                       (string-join (map (lambda (c) (if (path? c) (path->string c) c)) candidates)
                                    ", "))
               (current-continuation-marks)))))
 
-(define nanoarrow-lib (load-nanoarrow-library "nanoarrow_shared"))
-(define nanoarrow-ipc-lib (load-nanoarrow-library "nanoarrow_ipc_shared"))
+(define nanoarrow-lib (load-nanoarrow-library '("nanoarrow_shared" "nanoarrow")))
+(define nanoarrow-ipc-lib (load-nanoarrow-library '("nanoarrow_ipc_shared" "nanoarrow_ipc")))
 
 (define-ffi-definer define-nanoarrow nanoarrow-lib)
 (define-ffi-definer define-nanoarrow-ipc nanoarrow-ipc-lib)
