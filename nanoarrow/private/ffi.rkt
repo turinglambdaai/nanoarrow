@@ -59,7 +59,20 @@
    base-names
    (for*/list ([dir (in-list candidate-directories)]
                [file (in-list file-names)])
-     (path->string (expand-user-path (build-path dir file))))))
+     (path->string (expand-user-path (build-path dir file))))
+   ;; Directory scan fallback: catches any soname scheme (e.g.
+   ;; libnanoarrow_ipc.so.900.0.0) without hard-coding version numbers.
+   (let ([scan (lambda (dir)
+                 (define p (expand-user-path dir))
+                 (if (directory-exists? p)
+                     (for*/list ([f (in-list (directory-list p))]
+                                 [base (in-list base-names)]
+                                 #:when (regexp-match?
+                                         (pregexp (format "^lib~a.*\\.(so|dylib|dll)$" base))
+                                         (path->string f)))
+                       (path->string (build-path p f)))
+                     '()))])
+     (apply append (map scan candidate-directories)))))
 
 (define (try-ffi-lib spec)
   (with-handlers ([exn:fail:filesystem? (lambda (_) #f)])
