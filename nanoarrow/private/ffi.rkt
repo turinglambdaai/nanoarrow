@@ -49,12 +49,12 @@
      (for*/list ([base (in-list base-names)])
        (format "lib~a.~a" base runtime-lib-extension))
      (if (equal? runtime-lib-extension "dylib")
-         (for*/list ([base (in-list base-names)])
-           (list (format "lib~a.9.dylib" base)
-                 (format "lib~a.0.dylib" base)))
-         (for*/list ([base (in-list base-names)])
-           (list (format "lib~a.so.9" base)
-                 (format "lib~a.so.0" base))))))
+         (append* (for*/list ([base (in-list base-names)])
+                    (list (format "lib~a.9.dylib" base)
+                          (format "lib~a.0.dylib" base))))
+         (append* (for*/list ([base (in-list base-names)])
+                    (list (format "lib~a.so.9" base)
+                          (format "lib~a.so.0" base)))))))
   (append
    base-names
    (for*/list ([dir (in-list candidate-directories)]
