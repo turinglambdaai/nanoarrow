@@ -11,9 +11,19 @@
 (define pkg-authors '("turinglambdaai"))
 (define license 'MIT)
 (define scribblings '(("nanoarrow/scribblings/nanoarrow.scrbl" ())))
-;; "nanoarrow-tests.rkt" is loaded conditionally by "nanoarrow-test.rkt"
-;; (native library probe); the scribblings module is not a test;
-;; test/interop contains build-time fixture tooling, not tests.
-(define test-omit-paths '("nanoarrow/test/nanoarrow-tests.rkt"
-                          "nanoarrow/scribblings"
-                          "test/interop"))
+;; The catalog build farm runs `raco test --package`, executing every module
+;; in the package as a test.  The modules that load the nanoarrow native
+;; library at require time cannot run on machines without it (the farm), so
+;; they are omitted here; the CI workflow and
+;; `raco test nanoarrow/nanoarrow/test/nanoarrow-test.rkt` exercise the full
+;; suite through the probe entry point.  test/interop is build-time fixture
+;; tooling, not tests.
+(define test-omit-paths
+  '("nanoarrow/test/nanoarrow-tests.rkt" ; loaded conditionally by the probe
+    "nanoarrow/scribblings"              ; documentation, not tests
+    "test/interop"
+    "nanoarrow/main.rkt"
+    "nanoarrow/private/ffi.rkt"
+    "nanoarrow/private/schema.rkt"
+    "nanoarrow/private/arrays.rkt"
+    "nanoarrow/private/ipc.rkt"))
