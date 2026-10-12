@@ -45,7 +45,7 @@ jobs:
           echo "LD_LIBRARY_PATH=$HOME/.nanoarrow/lib" >> "$GITHUB_ENV"
 
       - name: Install package
-        run: raco pkg install --auto --link .
+        run: raco pkg install --auto --link "$(pwd)"
 
       - name: Run tests
         run: raco test -p nanoarrow
