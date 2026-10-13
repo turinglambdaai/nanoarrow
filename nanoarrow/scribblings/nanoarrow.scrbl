@@ -15,6 +15,7 @@
 This package provides Racket FFI bindings to the Apache
 @link["https://arrow.apache.org/nanoarrow/"]{nanoarrow} C library
 (0.9.x). It can read and write
+@deftech[#:key "Arrow columnar format"]{Arrow columnar format}
 @link["https://arrow.apache.org/docs/format/Columnar.html#ipc-encoding"]{@tech-arrow{Arrow
 IPC}} payloads---the @tt{.arrow} file format and the stream format---holding
 one @bold{record batch} whose columns all have @bold{primitive types}. No
