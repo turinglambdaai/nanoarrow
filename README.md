@@ -1,5 +1,7 @@
 # nanoarrow
 
+**English** · [中文](README.zh-CN.md)
+
 [![CI](https://github.com/turinglambdaai/nanoarrow/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/nanoarrow/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Racket FFI bindings to [Apache Arrow
